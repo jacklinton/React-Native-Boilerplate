@@ -2,16 +2,28 @@ import React, { Component } from 'react';
 import {
   StyleSheet,
   Text,
-  View
+  View,
+  TouchableOpacity,
 } from 'react-native';
-import Meteor from 'react-native-meteor';
+import Meteor,{ createContainer } from 'react-native-meteor';
+
 
 const SERVER_URL = 'ws://localhost:3000/websocket';
+
+
 
 class App extends Component {
   componentWillMount() {
     Meteor.connect(SERVER_URL);
   }
+
+  handleAddItem() {
+    const name = Math.floor(Math.random() * 10);
+    Meteor.call('Items.addOne', { name }, (err, res) => {
+      console.log('Items.addOne', err, res);
+    });
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -19,8 +31,12 @@ class App extends Component {
           Welcome to React Native + Meteor!
         </Text>
         <Text style={styles.instructions}>
-          To get started, edit index.ios.js
+          Item Count: {this.props.count}
         </Text>
+
+        <TouchableOpacity style={styles.button} onPress={this.handleAddItem}>
+          <Text> Add Item </Text>
+        </TouchableOpacity>
         <Text style={styles.instructions}>
           Press Cmd+R to reload,{'\n'}
           Cmd+D or shake for dev menu
@@ -47,6 +63,15 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 5,
   },
+  button: {
+    padding: 10,
+    backgroundColor: '#c5c5c5',
+  },
 });
 
-export default App;
+export default createContainer(() => {
+  Meteor.subscribe('items');
+  return {
+    count: Meteor.collection('items').find().length,
+  };
+}, App);
